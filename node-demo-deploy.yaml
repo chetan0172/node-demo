@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: node-demo-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: node-demo-app }
+  template:
+    metadata:
+      labels: { app: node-demo-app }
+    spec:
+      containers:
+      - name: node-demo
+        image: <DOCKER_REPO>:latest     # ← replace
+        ports: [{ containerPort: 3000 }]
+        readinessProbe:
+          httpGet: { path: /health, port: 3000 }
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet: { path: /health, port: 3000 }
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        resources:
+          requests: { cpu: "200m", memory: "256Mi" }
+          limits:   { cpu: "500m", memory: "512Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: node-demo }
+spec:
+  selector: { app: node-demo-app }
+  ports:
+  - port: 80
+    targetPort: 3000
+    protocol: TCP
